@@ -11,7 +11,7 @@ flexcan_msgbuff_t g_can_receive_buff;
 /**
  * \brief   接收邮箱信息
  */
-flexcan_data_info_t rx_info = {
+flexcan_data_info_t g_rx_info = {
         .data_length = 8,
         .enable_brs = 1,
         .fd_enable = 0,
@@ -23,7 +23,7 @@ flexcan_data_info_t rx_info = {
 /**
  * \brief   发送邮箱信息
  */
-flexcan_data_info_t tx_info = {
+flexcan_data_info_t g_tx_info = {
         .data_length = 8,
         .enable_brs = 1,
         .fd_enable = 0,
@@ -43,7 +43,7 @@ void init_flexcan(void) {
     /* 设置全局屏蔽码 */
     FLEXCAN_DRV_SetRxMbGlobalMask(0, FLEXCAN_MSG_ID_EXT, RXMB_GLOBALMASK);
     /* 配置接收邮箱 */
-    FLEXCAN_DRV_ConfigRxMb(0, RECEIVE_STD_MB, &rx_info, RXID_UPDATE);
+    FLEXCAN_DRV_ConfigRxMb(0, RECEIVE_STD_MB, &g_rx_info, RXID_UPDATE);
     /* 设置接收回掉函数 */
     FLEXCAN_DRV_InstallEventCallback(0, xmodem_can_handler, NULL);
     /* 开始接收 */

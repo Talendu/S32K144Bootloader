@@ -31,12 +31,12 @@ extern flexcan_msgbuff_t   g_can_receive_buff;  /**< can接收到的最后一个数据包*/
 /**
  * \brief   接收邮箱信息
  */
-extern flexcan_data_info_t rx_info;
+extern flexcan_data_info_t g_rx_info;
 
 /**
  * \brief   发送邮箱信息
  */
-extern flexcan_data_info_t tx_info;
+extern flexcan_data_info_t g_tx_info;
 
 /**
  * \brief   初始化CAN

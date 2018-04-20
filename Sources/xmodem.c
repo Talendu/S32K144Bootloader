@@ -145,8 +145,8 @@ void xmodem_init(void)
 bool xmodem_is_active(void)
 {
     uint8_t ack = 'C';
-    tx_info.data_length = 1;
-    FLEXCAN_DRV_Send(INST_CANCOM0, TRANSMIT_STD_MB, &tx_info, 0x00, &ack);
+    g_tx_info.data_length = 1;
+    FLEXCAN_DRV_Send(INST_CANCOM0, TRANSMIT_STD_MB, &g_tx_info, 0x00, &ack);
 	xmodem_putchar(ack);
 	OSIF_TimeDelay(10);
 	if(xmodem_getchar_present())
@@ -220,8 +220,8 @@ void xmodem_putchar(uint8_t byte)
         while ((LPUART0->STAT & LPUART_STAT_TDRE_MASK) == 0);
         LPUART_HAL_Putchar(LPUART0, byte);
     } else {
-        tx_info.data_length = 1;
-        FLEXCAN_DRV_Send(INST_CANCOM0, TRANSMIT_STD_MB, &tx_info, 0x00, &byte);
+        g_tx_info.data_length = 1;
+        FLEXCAN_DRV_Send(INST_CANCOM0, TRANSMIT_STD_MB, &g_tx_info, 0x00, &byte);
     }
 }
 

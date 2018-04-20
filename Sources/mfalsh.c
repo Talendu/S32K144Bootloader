@@ -5,7 +5,8 @@
  *      Author: Administrator
  */
 #include "mflash.h"
-flash_ssd_config_t flashSSDConfig;
+
+flash_ssd_config_t g_flashSSDConfig;
 
 /**
  * \brief   写入pflash前的初始化操作
@@ -27,14 +28,14 @@ status_t flash_pflash_init(void)
     INT_SYS_EnableIRQGlobal();
 
     /* 初始化FLASH */
-    ret = FLASH_DRV_Init(&flash0_InitConfig0, &flashSSDConfig);
+    ret = FLASH_DRV_Init(&flash0_InitConfig0, &g_flashSSDConfig);
     if (ret != STATUS_SUCCESS)
     {
         return ret;
     }
 
     /* 设置flash写入完成回掉函数 */
-    flashSSDConfig.CallBack = (flash_callback_t)CCIF_Callback;
+    g_flashSSDConfig.CallBack = (flash_callback_t)CCIF_Callback;
 
     return STATUS_SUCCESS;
 }
@@ -69,7 +70,7 @@ status_t flash_EEPROM_init(void) {
     INT_SYS_EnableIRQGlobal();
 
     /* 初始化FLASH */
-    ret = FLASH_DRV_Init(&flash0_InitConfig0, &flashSSDConfig);
+    ret = FLASH_DRV_Init(&flash0_InitConfig0, &g_flashSSDConfig);
     if (ret != STATUS_SUCCESS)
     {
         return ret;
@@ -77,20 +78,20 @@ status_t flash_EEPROM_init(void) {
 
 #if ((FEATURE_FLS_HAS_FLEX_NVM == 1u) & (FEATURE_FLS_HAS_FLEX_RAM == 1u))
     /* 如果flexRam没有作为EEPROM使用,将其设置为EEPROM */
-    if (flashSSDConfig.EEESize == 0u)
+    if (g_flashSSDConfig.EEESize == 0u)
     {
 #ifndef FLASH_TARGET
         /* 擦出扇区 */
         uint32_t address;
         uint32_t size;
-        ret = FLASH_DRV_EraseAllBlock(&flashSSDConfig);
+        ret = FLASH_DRV_EraseAllBlock(&g_flashSSDConfig);
         if (ret != STATUS_SUCCESS)
         {
             return ret;
         }
 
         /* 校验是否擦除成功 */
-        ret = FLASH_DRV_VerifyAllBlock(&flashSSDConfig, 1u);
+        ret = FLASH_DRV_VerifyAllBlock(&g_flashSSDConfig, 1u);
         if (ret != STATUS_SUCCESS)
         {
             return ret;
@@ -104,7 +105,7 @@ status_t flash_EEPROM_init(void) {
         address = 0x40Cu;
         size = FTFx_LONGWORD_SIZE;
 #endif /* FEATURE_FLS_HAS_PROGRAM_PHRASE_CMD */
-        ret = FLASH_DRV_Program(&flashSSDConfig, address, size, unsecure_key);
+        ret = FLASH_DRV_Program(&g_flashSSDConfig, address, size, unsecure_key);
         if (ret != STATUS_SUCCESS)
         {
             return ret;
@@ -118,7 +119,7 @@ status_t flash_EEPROM_init(void) {
          * - EEEDataSizeCode = 0x02u: EEPROM size = 4 Kbytes
          * - DEPartitionCode = 0x08u: EEPROM backup size = 64 Kbytes
          */
-        ret = FLASH_DRV_DEFlashPartition(&flashSSDConfig, 0x02u, 0x08u, 0x0u, false);
+        ret = FLASH_DRV_DEFlashPartition(&g_flashSSDConfig, 0x02u, 0x08u, 0x0u, false);
         if (ret != STATUS_SUCCESS)
         {
             return ret;
@@ -126,14 +127,14 @@ status_t flash_EEPROM_init(void) {
         else
         {
             /* 重新初始化FLASH */
-            ret = FLASH_DRV_Init(&flash0_InitConfig0, &flashSSDConfig);
+            ret = FLASH_DRV_Init(&flash0_InitConfig0, &g_flashSSDConfig);
             if (ret != STATUS_SUCCESS)
             {
                 return ret;
             }
 
             /* 使能FlaxRAM为EEPROM */
-            ret = FLASH_DRV_SetFlexRamFunction(&flashSSDConfig, EEE_ENABLE, 0x00u, NULL);
+            ret = FLASH_DRV_SetFlexRamFunction(&g_flashSSDConfig, EEE_ENABLE, 0x00u, NULL);
             if (ret != STATUS_SUCCESS)
             {
                 return ret;
@@ -143,7 +144,7 @@ status_t flash_EEPROM_init(void) {
     else    /* FLexRAM已经被初始化为EEPROM */
     {
         /* 使能FlaxRAM为EEPROM */
-        ret = FLASH_DRV_SetFlexRamFunction(&flashSSDConfig, EEE_ENABLE, 0x00u, NULL);
+        ret = FLASH_DRV_SetFlexRamFunction(&g_flashSSDConfig, EEE_ENABLE, 0x00u, NULL);
         if (ret != STATUS_SUCCESS)
         {
             return ret;
@@ -152,7 +153,7 @@ status_t flash_EEPROM_init(void) {
 #endif /* (FEATURE_FLS_HAS_FLEX_NVM == 1u) & (FEATURE_FLS_HAS_FLEX_RAM == 1u) */
 
     /* 设置flash写入完成回掉函数 */
-    flashSSDConfig.CallBack = (flash_callback_t)CCIF_Callback;
+    g_flashSSDConfig.CallBack = (flash_callback_t)CCIF_Callback;
     return STATUS_SUCCESS;
 }
 
@@ -171,17 +172,17 @@ status_t flash_pflash_erase_sectors(uint32_t sector_index,
 
     dest = sector_index << 12;
     size = sector_num << 12;
-    ret = FLASH_DRV_EraseSector(&flashSSDConfig, dest, size);
+    ret = FLASH_DRV_EraseSector(&g_flashSSDConfig, dest, size);
     if (ret != STATUS_SUCCESS)
     {
         return ret;
     }
 
     /* Disable Callback */
-    flashSSDConfig.CallBack = NULL_CALLBACK;
+    g_flashSSDConfig.CallBack = NULL_CALLBACK;
 
     /* Verify the erase operation at margin level value of 1, user read */
-    ret = FLASH_DRV_VerifySection(&flashSSDConfig, dest, size / FTFx_DPHRASE_SIZE, 1u);
+    ret = FLASH_DRV_VerifySection(&g_flashSSDConfig, dest, size / FTFx_DPHRASE_SIZE, 1u);
     if (ret != STATUS_SUCCESS)
     {
         return ret;
@@ -205,14 +206,14 @@ status_t flash_write_PFLASH(uint32_t    address,
 {
     status_t ret;
     /* 向FLASH中写入数据 */
-    ret = FLASH_DRV_Program(&flashSSDConfig, address, size, p_sourceBuffer);
+    ret = FLASH_DRV_Program(&g_flashSSDConfig, address, size, p_sourceBuffer);
     if (ret != STATUS_SUCCESS)
     {
         return ret;
     }
 
     /* 校验写入的数据 */
-    ret = FLASH_DRV_ProgramCheck(&flashSSDConfig, address, size,
+    ret = FLASH_DRV_ProgramCheck(&g_flashSSDConfig, address, size,
             p_sourceBuffer, p_failAddr, 1u);
     if (ret != STATUS_SUCCESS)
     {
@@ -237,11 +238,11 @@ status_t flash_write_EEPROM(uint32_t    offset,
 {
     status_t ret;
     /* 向EEPROM中写入数据 */
-     if (flashSSDConfig.EEESize != 0u)
+     if (g_flashSSDConfig.EEESize != 0u)
      {
          uint32_t address;
-         address = flashSSDConfig.EERAMBase + offset;
-         ret = FLASH_DRV_EEEWrite(&flashSSDConfig, address, len, sourceBuffer);
+         address = g_flashSSDConfig.EERAMBase + offset;
+         ret = FLASH_DRV_EEEWrite(&g_flashSSDConfig, address, len, sourceBuffer);
          if (ret != STATUS_SUCCESS)
          {
              return ret;
