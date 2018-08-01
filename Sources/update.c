@@ -37,7 +37,7 @@ void updating(void) {
  */
 void update_init(void) {
     flash_pflash_init();
-    init_flexcan();
+    flexcan_init();
     LPUART_DRV_Init(INST_LPUART0, &lpuart0_State, &lpuart0_InitConfig0);
     LPUART_DRV_InstallRxCallback(INST_LPUART0, xmodem_uart_handler, NULL);
     LPUART_DRV_ReceiveData(INST_LPUART0, lpuart0_default_rx_buffer, 8);

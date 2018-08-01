@@ -35,7 +35,7 @@ flexcan_data_info_t g_tx_info = {
 /**
  * \brief   初始化CAN
  */
-void init_flexcan(void) {
+void flexcan_init(void) {
     /* 先将can复位 */
     FLEXCAN_DRV_Deinit(INST_CANCOM0);
     /* 配置CAN参数 */

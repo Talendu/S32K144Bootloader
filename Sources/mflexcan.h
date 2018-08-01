@@ -41,7 +41,7 @@ extern flexcan_data_info_t g_tx_info;
 /**
  * \brief   初始化CAN
  */
-void init_flexcan(void);
+void flexcan_init(void);
 
 /**
  * \brief       获取can0时钟频率
