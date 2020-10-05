@@ -65,6 +65,10 @@ void jump_to_app(uint32_t image_address) {
 int main(void)
 {
   /* Write your local variable definition here */
+    int i;
+    uint8_t update_string[] = "update uart 1";
+    uint8_t instance;
+    uint8_t write = 0;
 
   /*** Processor Expert internal initialization. DON'T REMOVE THIS CODE!!! ***/
   #ifdef PEX_RTOS_INIT
@@ -74,33 +78,41 @@ int main(void)
 
   /* Write your code here */
   /* For example: for(;;) { } */
-    /* 初始化时钟 */
-    CLOCK_SYS_Init(g_clockManConfigsArr, CLOCK_MANAGER_CONFIG_CNT,
-            g_clockManCallbacksArr, CLOCK_MANAGER_CALLBACK_CNT);
-    CLOCK_SYS_UpdateConfiguration(0, CLOCK_MANAGER_POLICY_FORCIBLE);
+    flash_EEPROM_init();
+    /* 检测是否需要升级程序 */
+//    extern const uint32_t *__StackTop;
+//    if (*((uint32_t *)IMAGE_ADDR) != *__StackTop) {
+//        write = 1;
+//    }
+    if (write == 1)
+    {
+        flash_write_EEPROM(1024,update_string, 13);
+    }
 
-    /* 初始化引脚 */
-    PINS_DRV_Init(NUM_OF_CONFIGURED_PINS, g_pin_mux_InitConfigArr);
 
     /* 检测是否需要升级程序 */
-    if ((GPIO_HAL_ReadPins(PTE) & (1<<7)) != 0) {    /* 如果按键没有按下 */
-        int i;
-        uint8_t update_string[] = "update";
-        for (i=0; i<6; i++) {
-            if (((uint8_t *)&flash0_InitConfig0.EERAMBase)[i] != update_string[i]) {
-                break;
+    for (i=0; i<6; i++) {
+        if (((uint8_t *)flash0_InitConfig0.EERAMBase)[1024+i] != update_string[i]) {
+            break;
+        }
+    }
+    if (i == 6) {                /* 在EEPROM中的偏移1024字节中存储的是update */
+        /* 初始化时钟 */
+        CLOCK_SYS_Init(g_clockManConfigsArr, CLOCK_MANAGER_CONFIG_CNT,
+                g_clockManCallbacksArr, CLOCK_MANAGER_CALLBACK_CNT);
+        CLOCK_SYS_UpdateConfiguration(0, CLOCK_MANAGER_POLICY_FORCIBLE);
+        /* 初始化引脚 */
+        PINS_DRV_Init(NUM_OF_CONFIGURED_PINS, g_pin_mux_InitConfigArr);
+        instance = ((uint8_t *)flash0_InitConfig0.EERAMBase)[1024+12] - '0';
+        if (instance < LPUART_INSTANCE_COUNT)
+        {
+            if (update(instance) == STATUS_SUCCESS) /* 升级代码 */
+            {
+                uint8_t mask_eeprom[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+                flash_write_EEPROM(1024,mask_eeprom, 6);    /* 覆盖EEPROM中得到数据 */
             }
         }
-        if (i == 6) {                /* 在EEPROM中的偏移1024字节中存储的是update */
-            uint8_t mask_eeprom[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-            flash_EEPROM_init();
-            flash_write_EEPROM(1024,mask_eeprom, 6);    /* 覆盖EEPROM中得到数据 */
-            update();                /* 升级代码 */
-        }
-    } else {                                    /* 按键按下,升级程序 */
-        while ((GPIO_HAL_ReadPins(PTE) & (1<<7)) == 0);
-        OSIF_TimeDelay(10);
-        update();
+        software_reset();
     }
 
     /* 跳转到APP */

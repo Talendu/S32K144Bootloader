@@ -56,11 +56,6 @@ status_t flash_write_PFLASH(uint32_t address, uint32_t size, uint8_t *sourceBuff
  */
 status_t flash_write_EEPROM(uint32_t index, uint8_t *sourceBuffer, uint32_t len);
 
-/**
- * \brief   FLASH操作成功中断服务函数
- */
-void CCIF_Handler(void);
-
 START_FUNCTION_DECLARATION_RAMSECTION
 /**
  * \brief   写入flash前的回掉函数

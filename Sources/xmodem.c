@@ -142,12 +142,12 @@ void xmodem_init(void)
  * \retval  ture    上位机有响应
  *          false   上位机没有响应
  */
-bool xmodem_is_active(void)
+bool xmodem_is_active(uint8_t instance)
 {
     uint8_t ack = 'C';
     g_tx_info.data_length = 1;
-    FLEXCAN_DRV_Send(INST_CANCOM0, TRANSMIT_STD_MB, &g_tx_info, 0x00, &ack);
-	xmodem_putchar(ack);
+//    FLEXCAN_DRV_Send(instance, TRANSMIT_STD_MB, &g_tx_info, 0x00, &ack);
+	xmodem_putchar(instance, ack);
 	OSIF_TimeDelay(10);
 	if(xmodem_getchar_present())
 		return true;
@@ -164,6 +164,7 @@ bool xmodem_is_active(void)
 void xmodem_can_handler(uint8_t instance, flexcan_event_type_t eventType,
         struct FlexCANState * state)
 {
+    LPUART_Type * base = g_lpuartBase[instance];
     if (eventType == FLEXCAN_EVENT_RX_COMPLETE){
         if (g_can_receive_buff.msgId == RXID_UPDATE) {
             uint32_t i = 0;
@@ -171,8 +172,8 @@ void xmodem_can_handler(uint8_t instance, flexcan_event_type_t eventType,
                 xmodem_queue_byte(g_can_receive_buff.data[i]);
             }
         }
-        FLEXCAN_DRV_Receive(0, RECEIVE_STD_MB, &g_can_receive_buff);
-        LPUART_HAL_SetIntMode(LPUART0, LPUART_INT_RX_DATA_REG_FULL, false);
+//        FLEXCAN_DRV_Receive(0, RECEIVE_STD_MB, &g_can_receive_buff);
+        LPUART_HAL_SetIntMode(base, LPUART_INT_RX_DATA_REG_FULL, false);
         __g_is_update_by_uart = 0;
     }
 }
@@ -185,17 +186,18 @@ void xmodem_can_handler(uint8_t instance, flexcan_event_type_t eventType,
 void xmodem_uart_handler(uint32_t instance, void * lpuartState)
 {
     uint8_t byte;
-    if(LPUART_HAL_GetStatusFlag(LPUART0, LPUART_RX_DATA_REG_FULL))
+    LPUART_Type * base = g_lpuartBase[instance];
+    if(LPUART_HAL_GetStatusFlag(base, LPUART_RX_DATA_REG_FULL))
     {
-        LPUART_HAL_Getchar(LPUART0, &byte);
+        LPUART_HAL_Getchar(base, &byte);
         xmodem_queue_byte(byte);
         FLEXCAN_HAL_SetMsgBuffIntCmd(CAN0, RECEIVE_STD_MB, false);
         __g_is_update_by_uart = 1;
     }
     
-    if(LPUART_HAL_GetStatusFlag(LPUART0, LPUART_RX_OVERRUN))
+    if(LPUART_HAL_GetStatusFlag(base, LPUART_RX_OVERRUN))
     {
-        LPUART_HAL_Getchar(LPUART0, &byte);
+        LPUART_HAL_Getchar(base, &byte);
     }
     
 }
@@ -214,11 +216,13 @@ void xmodem_queue_byte(uint8_t byte)
  * \brief   向串口发送一字节数据
  * \param   x   发送的数据
  */
-void xmodem_putchar(uint8_t byte)
+void xmodem_putchar(uint8_t instance, uint8_t byte)
 {
+    LPUART_Type * base;
     if (__g_is_update_by_uart) {
-        while ((LPUART0->STAT & LPUART_STAT_TDRE_MASK) == 0);
-        LPUART_HAL_Putchar(LPUART0, byte);
+        base = g_lpuartBase[instance];
+        while ((base->STAT & LPUART_STAT_TDRE_MASK) == 0);
+        LPUART_HAL_Putchar(base, byte);
     } else {
         g_tx_info.data_length = 1;
         FLEXCAN_DRV_Send(INST_CANCOM0, TRANSMIT_STD_MB, &g_tx_info, 0x00, &byte);
@@ -240,7 +244,7 @@ bool xmodem_getchar_present(void)
  * \retval  STATUS_SUCCESS  接收成功
  * \        STATUS_ERROR    接收错误
  */
-status_t xmodem_download(void)
+status_t xmodem_download(uint8_t instance)
 {
     uint8_t ch;
     int done;
@@ -266,16 +270,16 @@ status_t xmodem_download(void)
 					if (xmodem_write_image((uint8_t*)buffer, __PKTLEN_128) != STATUS_SUCCESS) {
 					    return STATUS_ERROR;
 					}
-					xmodem_putchar(ACK);
+					xmodem_putchar(instance, ACK);
                 }
 				else
 				{
 					done = 0;
-					xmodem_putchar(NAK);
+					xmodem_putchar(instance, NAK);
 				}
                 break;
             case EOT:
-                xmodem_putchar(ACK);
+                xmodem_putchar(instance, ACK);
 
                 done = size;
                 break;
@@ -287,7 +291,7 @@ status_t xmodem_download(void)
 				break;	
 				
 			default:
-				xmodem_putchar(NAK);
+				xmodem_putchar(instance, NAK);
 				break;
         }
     }

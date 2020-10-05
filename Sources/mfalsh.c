@@ -17,12 +17,8 @@ status_t flash_pflash_init(void)
 
 #ifdef S32K144_SERIES
     /* 禁用缓存 */
-    MSCM->OCMDR[0u] |= MSCM_OCMDR_OCM0(0xFu) | MSCM_OCMDR_OCM1(0xFu) | MSCM_OCMDR_OCM2(0xFu);
+//    MSCM->OCMDR[0u] |= MSCM_OCMDR_OCM0(0xFu) | MSCM_OCMDR_OCM1(0xFu) | MSCM_OCMDR_OCM2(0xFu);
 #endif/* S32K144_SERIES */
-
-    /* 设置中断服务函数 */
-    INT_SYS_InstallHandler(FTFC_IRQn, CCIF_Handler, (isr_t*) 0);
-    INT_SYS_EnableIRQ(FTFC_IRQn);
 
     /* 使能全局中断 */
     INT_SYS_EnableIRQGlobal();
@@ -58,13 +54,9 @@ status_t flash_EEPROM_init(void) {
 
 #ifdef S32K144_SERIES
     /* 禁用缓存 */
-    MSCM->OCMDR[1u] |= MSCM_OCMDR_OCM0(0xFu) | MSCM_OCMDR_OCM1(0xFu) | MSCM_OCMDR_OCM2(0xFu);
-    MSCM->OCMDR[2u] |= MSCM_OCMDR_OCM0(0xFu) | MSCM_OCMDR_OCM1(0xFu) | MSCM_OCMDR_OCM2(0xFu);
+//    MSCM->OCMDR[1u] |= MSCM_OCMDR_OCM0(0xFu) | MSCM_OCMDR_OCM1(0xFu) | MSCM_OCMDR_OCM2(0xFu);
+//    MSCM->OCMDR[2u] |= MSCM_OCMDR_OCM0(0xFu) | MSCM_OCMDR_OCM1(0xFu) | MSCM_OCMDR_OCM2(0xFu);
 #endif /* S32K144_SERIES */
-
-    /* 设置中断服务函数 */
-    INT_SYS_InstallHandler(FTFC_IRQn, CCIF_Handler, (isr_t*) 0);
-    INT_SYS_EnableIRQ(FTFC_IRQn);
 
     /* 使能全局中断 */
     INT_SYS_EnableIRQGlobal();
@@ -258,27 +250,11 @@ status_t flash_write_EEPROM(uint32_t    offset,
 }
 
 /**
- * \brief   FLASH操作成功中断服务函数
- */
-void CCIF_Handler(void)
-{
-  /* 关闭flash写入完成中断 */
-  FTFx_FCNFG &= (~FTFx_FCNFG_CCIE_MASK);
-
-  return;
-}
-
-/**
  * \brief   写入flash前的回掉函数
  * \details 在向FALSH写入数据前,会先调用该函数
  */
 START_FUNCTION_DEFINITION_RAMSECTION
 void CCIF_Callback(void)
 {
-  /* 使能FLASH写入完成中断 */
-  if ((FTFx_FCNFG & FTFx_FCNFG_CCIE_MASK) == 0u)
-  {
-      FTFx_FCNFG |= FTFx_FCNFG_CCIE_MASK;
-  }
 }
 END_FUNCTION_DEFINITION_RAMSECTION

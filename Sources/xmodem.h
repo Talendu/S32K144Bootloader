@@ -6,7 +6,7 @@
 #include "status.h"
 #include "mflexcan.h"
 
-#define APP_IMAGE_START     0xB000
+#define APP_IMAGE_START     0xA000
 
 /*
  * \brief   XMODEM模式下载初始化
@@ -19,7 +19,7 @@ void xmodem_init(void);
  * \retval  STATUS_SUCCESS  接收成功
  * \        STATUS_ERROR    接收错误
  */
-status_t xmodem_download(void);
+status_t xmodem_download(uint8_t instance);
 
 /*
  * \brief   向上位机请求数据
@@ -29,7 +29,7 @@ status_t xmodem_download(void);
  * \retval  ture    上位机有响应
  *          false   上位机没有响应
  */
-bool xmodem_is_active(void);
+bool xmodem_is_active(uint8_t instance);
 
 /*
  * \brief   向串口接收缓冲区末尾添加一字节数据
@@ -41,7 +41,7 @@ void xmodem_queue_byte(uint8_t byte);
  * \brief   向串口发送一字节数据
  * \param   x   发送的数据
  */
-void xmodem_putchar(uint8_t x);
+void xmodem_putchar(uint8_t instance, uint8_t byte);
 
 /*
  * \brief   判断数据缓冲区书否为有数据

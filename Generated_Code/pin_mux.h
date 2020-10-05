@@ -1370,7 +1370,7 @@
 /* MODULE pin_mux. */
 #include "pins_driver.h"
 /*! @brief User number of configured pins */
-#define NUM_OF_CONFIGURED_PINS 89
+#define NUM_OF_CONFIGURED_PINS 4
 
 /*! @brief User configuration structure */
 extern pin_settings_config_t g_pin_mux_InitConfigArr[NUM_OF_CONFIGURED_PINS];
